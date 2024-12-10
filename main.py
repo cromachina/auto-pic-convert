@@ -1,10 +1,8 @@
 import os
-import time
 import argparse
 from PIL import Image
 from pathlib import Path
-from watchdog.events import FileSystemEventHandler
-from watchdog.observers import Observer
+from watchfiles import watch, Change
 
 target_types = ['.png']
 output_type = '.jpg'
@@ -22,27 +20,15 @@ def process_file(path):
     except Exception as e:
         print(e)
 
-class EventHandler(FileSystemEventHandler):
-    def on_closed(self, event):
-        process_file(event.src_path)
-    def on_moved(self, event):
-        process_file(event.dest_path)
-    def on_modified(self, event):
-        process_file(event.src_path)
-
 parser = argparse.ArgumentParser()
 parser.add_argument('path', nargs='?', default='.')
 args = parser.parse_args()
 os.chdir(args.path)
+cwd = os.getcwd()
 
-event_handler = EventHandler()
-observer = Observer()
-observer.schedule(event_handler, '.', recursive=True)
-observer.start()
-try:
-    print(f"Watching directory: {os.getcwd()}")
-    while observer.is_alive():
-        time.sleep(1)
-finally:
-    observer.stop()
-    observer.join()
+print(f'Watching directory: {cwd}')
+for changes in watch('.'):
+    for type, path in changes:
+        if type in [Change.added, Change.modified]:
+            path = Path(path).relative_to(cwd)
+            process_file(path)
