@@ -1,4 +1,5 @@
 import os
+import time
 import argparse
 from PIL import Image
 from pathlib import Path
@@ -26,6 +27,8 @@ class EventHandler(FileSystemEventHandler):
         process_file(event.src_path)
     def on_moved(self, event):
         process_file(event.dest_path)
+    def on_modified(self, event):
+        process_file(event.src_path)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('path', nargs='?', default='.')
@@ -36,4 +39,10 @@ event_handler = EventHandler()
 observer = Observer()
 observer.schedule(event_handler, '.', recursive=True)
 observer.start()
-observer.join()
+try:
+    print(f"Watching directory: {os.getcwd()}")
+    while observer.is_alive():
+        time.sleep(1)
+finally:
+    observer.stop()
+    observer.join()
