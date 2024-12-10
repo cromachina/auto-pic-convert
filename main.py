@@ -25,7 +25,6 @@ class EventHandler(FileSystemEventHandler):
     def on_closed(self, event):
         process_file(event.src_path)
     def on_moved(self, event):
-        print(event)
         process_file(event.dest_path)
 
 parser = argparse.ArgumentParser()
